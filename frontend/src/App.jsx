@@ -124,18 +124,20 @@ function App() {
       const response = await fetch(endpoints.weatherByCode(code));
       const data = await response.json();
 
-      if (data.status === 'success' && data.data?.length > 0) {
+      if (data.status === 'success' && data.data) {
         const station = STATIONS.find(s => s.code === code);
+        // La API puede devolver un objeto o un array
+        const weatherInfo = Array.isArray(data.data) ? data.data[0] : data.data;
         setWeatherData({
-          ...data.data[0],
-          region: station?.region || data.data[0].region
+          ...weatherInfo,
+          region: station?.region || weatherInfo.region || 'Chile'
         });
       } else {
         setError('No se encontraron datos para esta estación');
         setWeatherData(null);
       }
     } catch (err) {
-      setError('Error al conectar con el servidor. Verifica que el backend esté corriendo.');
+      setError('Error al conectar con el servicio de clima.');
       setWeatherData(null);
     } finally {
       setLoading(false);
@@ -359,7 +361,7 @@ function App() {
                 <div className="loading-container">
                   <p className="loading-text">
                     No se pudieron cargar las estaciones.
-                    Verifica que el backend esté corriendo en el puerto 3001.
+                    Intenta recargar la página.
                   </p>
                 </div>
               )}
