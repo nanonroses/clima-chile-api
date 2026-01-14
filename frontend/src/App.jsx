@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { endpoints } from './config/api';
 
 // Import new sections
 import EarthquakeSection from './components/earthquakes/EarthquakeSection';
@@ -100,7 +101,7 @@ function App() {
   const fetchAllWeather = async () => {
     setLoadingAll(true);
     try {
-      const response = await fetch('/api/weather');
+      const response = await fetch(endpoints.weather);
       const data = await response.json();
 
       if (data.status === 'success') {
@@ -120,7 +121,7 @@ function App() {
     setError(null);
 
     try {
-      const response = await fetch(`/api/weather/${code}`);
+      const response = await fetch(endpoints.weatherByCode(code));
       const data = await response.json();
 
       if (data.status === 'success' && data.data?.length > 0) {

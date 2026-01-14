@@ -1,51 +1,5 @@
 {
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
-  "framework": "vite",
-  "rewrites": [
-    {
-      "source": "/api/weather/:path*",
-      "destination": "https://api.boostr.cl/weather/:path*"
-    },
-    {
-      "source": "/api/weather",
-      "destination": "https://api.boostr.cl/weather.json"
-    },
-    {
-      "source": "/api/stations",
-      "destination": "https://api.boostr.cl/weather.json"
-    },
-    {
-      "source": "/api/earthquakes/:path*",
-      "destination": "https://api.boostr.cl/earthquakes/:path*"
-    },
-    {
-      "source": "/api/earthquakes",
-      "destination": "https://api.boostr.cl/earthquakes/recent.json"
-    },
-    {
-      "source": "/api/holidays/upcoming",
-      "destination": "https://api.boostr.cl/holidays.json"
-    },
-    {
-      "source": "/api/holidays/today",
-      "destination": "https://api.boostr.cl/holidays/is/today.json"
-    },
-    {
-      "source": "/api/holidays/:path*",
-      "destination": "https://api.boostr.cl/holidays/:path*"
-    },
-    {
-      "source": "/api/holidays",
-      "destination": "https://api.boostr.cl/holidays.json"
-    },
-    {
-      "source": "/api/indicators/:path*",
-      "destination": "https://api.boostr.cl/economy/indicator/:path*"
-    },
-    {
-      "source": "/api/indicators",
-      "destination": "https://api.boostr.cl/economy/indicators.json"
-    }
-  ]
+  "framework": "vite"
 }

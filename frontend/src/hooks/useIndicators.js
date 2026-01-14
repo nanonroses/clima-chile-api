@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { endpoints } from '../config/api';
 
 export function useIndicators() {
   const [indicators, setIndicators] = useState(null);
@@ -10,7 +11,7 @@ export function useIndicators() {
     setError(null);
 
     try {
-      const response = await fetch('/api/indicators');
+      const response = await fetch(endpoints.indicators);
       const data = await response.json();
 
       if (data.status === 'success') {

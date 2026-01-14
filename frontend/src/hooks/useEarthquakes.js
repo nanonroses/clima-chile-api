@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { endpoints } from '../config/api';
 
 export function useEarthquakes() {
   const [earthquakes, setEarthquakes] = useState([]);
@@ -10,7 +11,7 @@ export function useEarthquakes() {
     setError(null);
 
     try {
-      const response = await fetch('/api/earthquakes');
+      const response = await fetch(endpoints.earthquakes);
       const data = await response.json();
 
       if (data.status === 'success') {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { endpoints } from '../config/api';
 
 export function useHolidays() {
   const [holidays, setHolidays] = useState([]);
@@ -11,7 +12,7 @@ export function useHolidays() {
     setError(null);
 
     try {
-      const response = await fetch('/api/holidays');
+      const response = await fetch(endpoints.holidays);
       const data = await response.json();
 
       if (data.status === 'success' && data.data) {
