@@ -11,21 +11,25 @@ export function useHolidays() {
     setError(null);
 
     try {
-      // Fetch próximos feriados y verificar si hoy es feriado
-      const [upcomingRes, todayRes] = await Promise.all([
-        fetch('/api/holidays/upcoming'),
-        fetch('/api/holidays/today')
-      ]);
+      const response = await fetch('/api/holidays');
+      const data = await response.json();
 
-      const upcomingData = await upcomingRes.json();
-      const todayData = await todayRes.json();
+      if (data.status === 'success' && data.data) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayStr = today.toISOString().split('T')[0];
 
-      if (upcomingData.status === 'success') {
-        setHolidays(upcomingData.data || []);
-      }
+        // Filtrar próximos 5 feriados
+        const upcoming = data.data
+          .filter(holiday => new Date(holiday.date) >= today)
+          .slice(0, 5);
+        setHolidays(upcoming);
 
-      if (todayData.status === 'success' && todayData.data) {
-        setTodayHoliday(todayData.data);
+        // Verificar si hoy es feriado
+        const todayMatch = data.data.find(h => h.date === todayStr);
+        if (todayMatch) {
+          setTodayHoliday({ is_holiday: true, ...todayMatch });
+        }
       }
     } catch (err) {
       setError('Error al obtener feriados');
