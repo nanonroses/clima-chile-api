@@ -1,12 +1,15 @@
-// En desarrollo usa el proxy local, en producción usa Boostr directamente
-const isDev = import.meta.env.DEV;
+// Configuración de endpoints de API
+// SIEMPRE usa el backend como proxy para mantener seguridad (rate limiting, logs, etc.)
 
-export const API_BASE = isDev ? '' : 'https://api.boostr.cl';
+// URL del backend - en producción debe configurarse en variables de entorno de Vercel
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
+
+export const API_BASE = BACKEND_URL;
 
 export const endpoints = {
-  weather: isDev ? '/api/weather' : `${API_BASE}/weather.json`,
-  weatherByCode: (code) => isDev ? `/api/weather/${code}` : `${API_BASE}/weather/${code}.json`,
-  earthquakes: isDev ? '/api/earthquakes' : `${API_BASE}/earthquakes/recent.json`,
-  holidays: isDev ? '/api/holidays' : `${API_BASE}/holidays.json`,
-  indicators: isDev ? '/api/indicators' : `${API_BASE}/economy/indicators.json`,
+  weather: `${API_BASE}/api/weather`,
+  weatherByCode: (code) => `${API_BASE}/api/weather/${code}`,
+  earthquakes: `${API_BASE}/api/earthquakes`,
+  holidays: `${API_BASE}/api/holidays`,
+  indicators: `${API_BASE}/api/indicators`,
 };

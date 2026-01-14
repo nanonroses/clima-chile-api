@@ -1,52 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { endpoints } from './config/api';
-
-// Import new sections
 import EarthquakeSection from './components/earthquakes/EarthquakeSection';
 import HolidaysSection from './components/holidays/HolidaysSection';
 import IndicatorsSection from './components/indicators/IndicatorsSection';
 
-// Weather condition to icon mapping
-const getWeatherIcon = (condition) => {
-  if (!condition) return '🌡️';
-  const c = condition.toLowerCase();
-
-  if (c.includes('despejado') || c.includes('soleado') || c.includes('claro')) return '☀️';
-  if (c.includes('parcial') || c.includes('algo')) return '⛅';
-  if (c.includes('nublado') || c.includes('cubierto') || c.includes('nuboso')) return '☁️';
-  if (c.includes('lluvia') || c.includes('llovizna') || c.includes('precipit')) return '🌧️';
-  if (c.includes('tormenta') || c.includes('trueno')) return '⛈️';
-  if (c.includes('nieve') || c.includes('nevada')) return '❄️';
-  if (c.includes('niebla') || c.includes('neblina') || c.includes('bruma')) return '🌫️';
-  if (c.includes('viento')) return '💨';
-
-  return '🌤️';
-};
-
-// Get weather icon CSS class for animations
-const getWeatherClass = (condition) => {
-  if (!condition) return '';
-  const c = condition.toLowerCase();
-
-  if (c.includes('despejado') || c.includes('soleado') || c.includes('claro')) return 'sunny';
-  if (c.includes('lluvia') || c.includes('llovizna') || c.includes('precipit')) return 'rainy';
-  if (c.includes('tormenta')) return 'stormy';
-
-  return '';
-};
-
-// Generate random stars for night mode
-const generateStars = (count = 50) => {
-  return Array.from({ length: count }, (_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    top: `${Math.random() * 100}%`,
-    animationDelay: `${Math.random() * 3}s`,
-    size: Math.random() * 2 + 1
-  }));
-};
-
-// List of Chilean weather stations
+// Weather data
 const STATIONS = [
   { code: 'SCAR', city: 'Arica', region: 'Arica y Parinacota' },
   { code: 'SCDA', city: 'Iquique', region: 'Tarapacá' },
@@ -75,313 +33,307 @@ const STATIONS = [
   { code: 'SCRM', city: 'Base Antártica', region: 'Antártica Chilena' }
 ];
 
-function App() {
-  // Determine initial theme based on time of day
-  const getInitialTheme = () => {
-    const hour = new Date().getHours();
-    return (hour >= 7 && hour < 19) ? 'day' : 'night';
-  };
+// Get weather type for animations
+const getWeatherType = (condition) => {
+  if (!condition) return 'clear';
+  const c = condition.toLowerCase();
+  if (c.includes('lluvia') || c.includes('llovizna') || c.includes('precipit')) return 'rain';
+  if (c.includes('tormenta') || c.includes('trueno')) return 'storm';
+  if (c.includes('nieve') || c.includes('nevada')) return 'snow';
+  if (c.includes('nublado') || c.includes('cubierto') || c.includes('nuboso')) return 'cloudy';
+  if (c.includes('niebla') || c.includes('neblina') || c.includes('bruma')) return 'fog';
+  if (c.includes('despejado') || c.includes('soleado') || c.includes('claro')) return 'sunny';
+  if (c.includes('parcial')) return 'partly';
+  return 'clear';
+};
 
-  const [theme, setTheme] = useState(getInitialTheme);
-  const [selectedStation, setSelectedStation] = useState('');
+const getWeatherIcon = (condition) => {
+  if (!condition) return '🌡️';
+  const c = condition.toLowerCase();
+  if (c.includes('despejado') || c.includes('soleado') || c.includes('claro')) return '☀️';
+  if (c.includes('parcial') || c.includes('algo')) return '⛅';
+  if (c.includes('nublado') || c.includes('cubierto') || c.includes('nuboso')) return '☁️';
+  if (c.includes('lluvia') || c.includes('llovizna') || c.includes('precipit')) return '🌧️';
+  if (c.includes('tormenta') || c.includes('trueno')) return '⛈️';
+  if (c.includes('nieve') || c.includes('nevada')) return '❄️';
+  if (c.includes('niebla') || c.includes('neblina') || c.includes('bruma')) return '🌫️';
+  return '🌤️';
+};
+
+function App() {
+  const [selectedStation, setSelectedStation] = useState('SCQN');
   const [weatherData, setWeatherData] = useState(null);
   const [allWeatherData, setAllWeatherData] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [loadingAll, setLoadingAll] = useState(true);
-  const [error, setError] = useState(null);
+  const [showPanel, setShowPanel] = useState(false);
 
-  // Generate stars once
-  const stars = useMemo(() => generateStars(60), []);
+  const weatherType = useMemo(() =>
+    getWeatherType(weatherData?.condition),
+    [weatherData?.condition]
+  );
 
-  // Fetch all weather data on mount
   useEffect(() => {
     fetchAllWeather();
+    const interval = setInterval(fetchAllWeather, 5 * 60 * 1000);
+    return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (allWeatherData.length > 0 && !weatherData) {
+      selectCity('SCQN');
+    }
+  }, [allWeatherData]);
 
   const fetchAllWeather = async () => {
     setLoadingAll(true);
     try {
       const response = await fetch(endpoints.weather);
       const data = await response.json();
-
       if (data.status === 'success') {
         setAllWeatherData(data.data || []);
       }
     } catch (err) {
-      console.error('Error fetching all weather:', err);
+      console.error('Error:', err);
     } finally {
       setLoadingAll(false);
     }
   };
 
-  const fetchWeather = async (code) => {
-    if (!code) return;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await fetch(endpoints.weatherByCode(code));
-      const data = await response.json();
-
-      if (data.status === 'success' && data.data) {
-        const station = STATIONS.find(s => s.code === code);
-        // La API puede devolver un objeto o un array
-        const weatherInfo = Array.isArray(data.data) ? data.data[0] : data.data;
-        setWeatherData({
-          ...weatherInfo,
-          region: station?.region || weatherInfo.region || 'Chile'
-        });
-      } else {
-        setError('No se encontraron datos para esta estación');
-        setWeatherData(null);
-      }
-    } catch (err) {
-      setError('Error al conectar con el servicio de clima.');
-      setWeatherData(null);
-    } finally {
-      setLoading(false);
+  const selectCity = (code) => {
+    setSelectedStation(code);
+    const cached = allWeatherData.find(s => s.code === code);
+    if (cached) {
+      const stationInfo = STATIONS.find(s => s.code === code);
+      setWeatherData({
+        ...cached,
+        region: stationInfo?.region || cached.region || 'Chile'
+      });
     }
+    setShowPanel(false);
   };
 
-  const handleConsult = () => {
-    if (selectedStation) {
-      fetchWeather(selectedStation);
-    }
-  };
+  const currentTime = new Date().toLocaleTimeString('es-CL', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 
-  const handleStationClick = (stationData) => {
-    // Usar los datos directamente del grid en lugar de hacer otra llamada API
-    const stationInfo = STATIONS.find(s => s.code === stationData.code);
-    setSelectedStation(stationData.code);
-    setWeatherData({
-      ...stationData,
-      region: stationInfo?.region || stationData.region || 'Chile'
-    });
-    setError(null);
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  // Generate rain drops
+  const rainDrops = useMemo(() =>
+    Array.from({ length: 100 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 2,
+      duration: 0.5 + Math.random() * 0.5
+    })), []
+  );
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'day' ? 'night' : 'day');
-  };
+  // Generate snow flakes
+  const snowFlakes = useMemo(() =>
+    Array.from({ length: 50 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      delay: Math.random() * 5,
+      duration: 3 + Math.random() * 4,
+      size: 4 + Math.random() * 8
+    })), []
+  );
+
+  // Generate clouds
+  const clouds = useMemo(() =>
+    Array.from({ length: 6 }, (_, i) => ({
+      id: i,
+      top: 10 + Math.random() * 30,
+      duration: 30 + Math.random() * 40,
+      delay: Math.random() * 20,
+      scale: 0.8 + Math.random() * 0.6
+    })), []
+  );
 
   return (
-    <div className="app-container" data-theme={theme}>
-      {/* Atmospheric Particles */}
-      <div className="particles-container">
-        {/* Floating Clouds */}
-        <div className="cloud"></div>
-        <div className="cloud"></div>
-        <div className="cloud"></div>
+    <div className={`immersive-app weather-${weatherType}`}>
+      {/* Animated Background */}
+      <div className="weather-bg">
+        {/* Sun rays for sunny weather */}
+        {(weatherType === 'sunny' || weatherType === 'clear') && (
+          <div className="sun-container">
+            <div className="sun"></div>
+            <div className="sun-rays"></div>
+          </div>
+        )}
 
-        {/* Night Stars */}
-        {stars.map(star => (
-          <div
-            key={star.id}
-            className="star"
-            style={{
-              left: star.left,
-              top: star.top,
-              animationDelay: star.animationDelay,
-              width: `${star.size}px`,
-              height: `${star.size}px`
-            }}
-          />
-        ))}
-      </div>
+        {/* Clouds */}
+        {(weatherType === 'cloudy' || weatherType === 'partly' || weatherType === 'rain') && (
+          <div className="clouds-container">
+            {clouds.map(cloud => (
+              <div
+                key={cloud.id}
+                className="cloud"
+                style={{
+                  top: `${cloud.top}%`,
+                  animationDuration: `${cloud.duration}s`,
+                  animationDelay: `${cloud.delay}s`,
+                  transform: `scale(${cloud.scale})`
+                }}
+              />
+            ))}
+          </div>
+        )}
 
-      {/* Theme Toggle */}
-      <div className="theme-toggle">
-        <button onClick={toggleTheme} aria-label="Cambiar tema">
-          {theme === 'day' ? '🌙' : '☀️'}
-        </button>
+        {/* Rain */}
+        {(weatherType === 'rain' || weatherType === 'storm') && (
+          <div className="rain-container">
+            {rainDrops.map(drop => (
+              <div
+                key={drop.id}
+                className="rain-drop"
+                style={{
+                  left: `${drop.left}%`,
+                  animationDelay: `${drop.delay}s`,
+                  animationDuration: `${drop.duration}s`
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Lightning for storms */}
+        {weatherType === 'storm' && <div className="lightning"></div>}
+
+        {/* Snow */}
+        {weatherType === 'snow' && (
+          <div className="snow-container">
+            {snowFlakes.map(flake => (
+              <div
+                key={flake.id}
+                className="snow-flake"
+                style={{
+                  left: `${flake.left}%`,
+                  animationDelay: `${flake.delay}s`,
+                  animationDuration: `${flake.duration}s`,
+                  width: flake.size,
+                  height: flake.size
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Fog */}
+        {weatherType === 'fog' && (
+          <div className="fog-container">
+            <div className="fog-layer fog-1"></div>
+            <div className="fog-layer fog-2"></div>
+            <div className="fog-layer fog-3"></div>
+          </div>
+        )}
       </div>
 
       {/* Main Content */}
-      <main className="main-content">
-        {/* Hero Section */}
-        <section className="hero-section">
-          <h1 className="hero-title">
-            Clima Chile
-            <span className="chile-flag">
-              <span></span>
-            </span>
-          </h1>
-          <p className="hero-subtitle">
-            Consulta el estado del tiempo en tiempo real para las principales ciudades de Chile,
-            desde Arica hasta la Antártica
-          </p>
-        </section>
-
-        {/* Station Selector */}
-        <section className="selector-section">
-          <div className="selector-glass">
-            <label className="selector-label" htmlFor="station-select">
-              Selecciona una ciudad
-            </label>
-            <div className="selector-wrapper">
-              <select
-                id="station-select"
-                className="station-select"
-                value={selectedStation}
-                onChange={(e) => setSelectedStation(e.target.value)}
-              >
-                <option value="">-- Elige una estación meteorológica --</option>
-                {STATIONS.map(station => (
-                  <option key={station.code} value={station.code}>
-                    {station.city} - {station.region}
-                  </option>
-                ))}
-              </select>
-              <span className="selector-icon">📍</span>
-            </div>
-            <button
-              className={`consult-button ${loading ? 'loading' : ''}`}
-              onClick={handleConsult}
-              disabled={!selectedStation || loading}
-            >
-              {loading ? 'Consultando...' : 'Consultar Clima'}
-            </button>
+      <div className="immersive-content">
+        {/* Header */}
+        <header className="immersive-header">
+          <div className="header-location" onClick={() => setShowPanel(true)}>
+            <span className="location-icon">📍</span>
+            <span className="location-name">{weatherData?.city || 'Cargando...'}</span>
+            <span className="location-arrow">▼</span>
           </div>
-        </section>
+          <div className="header-time">{currentTime}</div>
+        </header>
 
-        {/* Error Display */}
-        {error && (
-          <div className="error-message">
-            <p>⚠️ {error}</p>
-          </div>
-        )}
-
-        {/* Weather Display */}
-        {weatherData && !loading && (
-          <section className="weather-section">
-            <div className="weather-card">
-              <div className="weather-city">
-                <h2>{weatherData.city}</h2>
-                <p className="weather-region">
-                  <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                  </svg>
-                  {weatherData.region}
-                </p>
+        {/* Hero Weather */}
+        <main className="weather-hero">
+          {weatherData ? (
+            <>
+              <div className="hero-icon">{getWeatherIcon(weatherData.condition)}</div>
+              <div className="hero-temp">
+                <span className="temp-number">{weatherData.temperature}</span>
+                <span className="temp-deg">°</span>
               </div>
-
-              <div className="weather-icon-container">
-                <span className={`weather-icon ${getWeatherClass(weatherData.condition)}`}>
-                  {getWeatherIcon(weatherData.condition)}
-                </span>
-              </div>
-
-              <div className="weather-temperature">
-                <span className="temp-value">
-                  {weatherData.temperature}
-                  <span className="temp-unit">°C</span>
-                </span>
-                <p className="weather-condition">{weatherData.condition || 'Sin datos'}</p>
-              </div>
-
-              <div className="weather-details">
-                <div className="detail-item">
-                  <div className="detail-icon">💧</div>
-                  <div className="detail-label">Humedad</div>
-                  <div className="detail-value">{weatherData.humidity || '--'}%</div>
+              <p className="hero-condition">{weatherData.condition || 'Sin datos'}</p>
+              <div className="hero-details">
+                <div className="detail">
+                  <span className="detail-value">{weatherData.humidity || '--'}%</span>
+                  <span className="detail-label">Humedad</span>
                 </div>
-                <div className="detail-item">
-                  <div className="detail-icon">🌡️</div>
-                  <div className="detail-label">Sensación</div>
-                  <div className="detail-value">{weatherData.temperature || '--'}°C</div>
-                </div>
-                <div className="detail-item">
-                  <div className="detail-icon">📊</div>
-                  <div className="detail-label">Código</div>
-                  <div className="detail-value">{weatherData.code}</div>
+                <div className="detail-separator"></div>
+                <div className="detail">
+                  <span className="detail-value">{weatherData.region}</span>
+                  <span className="detail-label">Región</span>
                 </div>
               </div>
-
-              {weatherData.updated_at && (
-                <p className="weather-updated">
-                  Última actualización: {weatherData.updated_at}
-                </p>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* New Information Sections */}
-        <div className="info-sections-grid">
-          <EarthquakeSection />
-          <HolidaysSection />
-        </div>
-
-        <IndicatorsSection />
-
-        {/* All Stations Grid */}
-        <section className="stations-grid-section">
-          <h3 className="stations-grid-title">
-            🗺️ Todas las estaciones disponibles
-          </h3>
-
-          {loadingAll ? (
-            <div className="loading-container">
-              <div className="loading-spinner"></div>
-              <p className="loading-text">Cargando estaciones...</p>
-            </div>
+            </>
           ) : (
-            <div className="stations-grid">
-              {allWeatherData.length > 0 ? (
-                allWeatherData.map(station => {
-                  const stationInfo = STATIONS.find(s => s.code === station.code);
-                  return (
-                    <div
-                      key={station.code}
-                      className="station-mini-card"
-                      onClick={() => handleStationClick(station)}
-                      role="button"
-                      tabIndex={0}
-                      onKeyDown={(e) => e.key === 'Enter' && handleStationClick(station)}
-                    >
-                      <span className="station-mini-icon">
-                        {getWeatherIcon(station.condition)}
-                      </span>
-                      <div className="station-mini-info">
-                        <div className="station-mini-city">{station.city}</div>
-                        <div className="station-mini-region">
-                          {stationInfo?.region || station.region || 'Chile'}
-                        </div>
-                      </div>
-                      <div className="station-mini-temp">
-                        {station.temperature}°
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="loading-container">
-                  <p className="loading-text">
-                    No se pudieron cargar las estaciones.
-                    Intenta recargar la página.
-                  </p>
-                </div>
-              )}
+            <div className="hero-loading">
+              <div className="spinner"></div>
+              <p>Cargando clima...</p>
             </div>
           )}
+        </main>
+
+        {/* Info Cards */}
+        <section className="info-cards">
+          <div className="glass-card">
+            <EarthquakeSection />
+          </div>
+          <div className="glass-card">
+            <HolidaysSection />
+          </div>
+          <div className="glass-card wide">
+            <IndicatorsSection />
+          </div>
         </section>
 
-        {/* Footer */}
-        <footer className="app-footer">
-          <p>
-            Datos proporcionados por{' '}
-            <a href="https://boostr.cl/clima" target="_blank" rel="noopener noreferrer">
-              API Boostr Chile
-            </a>
-          </p>
-          <p style={{ marginTop: '0.5rem', opacity: 0.7 }}>
-            Desarrollado con ❤️ para Chile 🇨🇱
-          </p>
-        </footer>
-      </main>
+        {/* Quick Cities Bar */}
+        <section className="cities-bar">
+          {allWeatherData.slice(0, 8).map(station => (
+            <button
+              key={station.code}
+              className={`city-btn ${selectedStation === station.code ? 'active' : ''}`}
+              onClick={() => selectCity(station.code)}
+            >
+              <span className="city-icon">{getWeatherIcon(station.condition)}</span>
+              <span className="city-name">{station.city}</span>
+              <span className="city-temp">{station.temperature}°</span>
+            </button>
+          ))}
+        </section>
+      </div>
+
+      {/* City Selection Panel */}
+      {showPanel && (
+        <div className="city-panel-overlay" onClick={() => setShowPanel(false)}>
+          <div className="city-panel" onClick={e => e.stopPropagation()}>
+            <div className="panel-header">
+              <h2>Seleccionar Ciudad</h2>
+              <button className="close-btn" onClick={() => setShowPanel(false)}>✕</button>
+            </div>
+            <div className="panel-cities">
+              {allWeatherData.map(station => {
+                const info = STATIONS.find(s => s.code === station.code);
+                return (
+                  <button
+                    key={station.code}
+                    className={`panel-city ${selectedStation === station.code ? 'active' : ''}`}
+                    onClick={() => selectCity(station.code)}
+                  >
+                    <span className="panel-city-icon">{getWeatherIcon(station.condition)}</span>
+                    <div className="panel-city-info">
+                      <span className="panel-city-name">{station.city}</span>
+                      <span className="panel-city-region">{info?.region}</span>
+                    </div>
+                    <span className="panel-city-temp">{station.temperature}°</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <footer className="immersive-footer">
+        <p>Datos de <a href="https://boostr.cl" target="_blank" rel="noopener noreferrer">Boostr API</a></p>
+      </footer>
     </div>
   );
 }

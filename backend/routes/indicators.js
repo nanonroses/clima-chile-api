@@ -1,11 +1,12 @@
 import { Router } from 'express';
 import { getAllIndicators, getIndicatorByType, getIndicatorHistory } from '../services/boostrApi.js';
 import { validators } from '../middleware/validator.js';
+import { strictLimiter } from '../middleware/security.js';
 
 const router = Router();
 
-// GET /api/indicators - Todos los indicadores actuales
-router.get('/', async (req, res) => {
+// GET /api/indicators - Todos los indicadores actuales (rate limit estricto - llama API externa)
+router.get('/', strictLimiter, async (req, res) => {
   try {
     const data = await getAllIndicators();
     res.json(data);
@@ -18,8 +19,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/indicators/:type - Indicador específico
-router.get('/:type', validators.indicatorType, async (req, res) => {
+// GET /api/indicators/:type - Indicador específico (rate limit estricto)
+router.get('/:type', strictLimiter, validators.indicatorType, async (req, res) => {
   const { type } = req.params;
 
   try {
@@ -34,8 +35,8 @@ router.get('/:type', validators.indicatorType, async (req, res) => {
   }
 });
 
-// GET /api/indicators/:type/:year - Historial de indicador por año
-router.get('/:type/:year', [...validators.indicatorType.slice(0, -1), ...validators.year], async (req, res) => {
+// GET /api/indicators/:type/:year - Historial de indicador por año (rate limit estricto)
+router.get('/:type/:year', strictLimiter, [...validators.indicatorType.slice(0, -1), ...validators.year], async (req, res) => {
   const { type, year } = req.params;
 
   try {

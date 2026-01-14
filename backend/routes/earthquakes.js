@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { getRecentEarthquakes } from '../services/boostrApi.js';
+import { strictLimiter } from '../middleware/security.js';
 
 const router = Router();
 
-// GET /api/earthquakes - Últimos 15 sismos
-router.get('/', async (req, res) => {
+// GET /api/earthquakes - Últimos 15 sismos (rate limit estricto - llama API externa)
+router.get('/', strictLimiter, async (req, res) => {
   try {
     const data = await getRecentEarthquakes();
     res.json(data);
@@ -17,8 +18,8 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET /api/earthquakes/recent - Alias
-router.get('/recent', async (req, res) => {
+// GET /api/earthquakes/recent - Alias (rate limit estricto)
+router.get('/recent', strictLimiter, async (req, res) => {
   try {
     const data = await getRecentEarthquakes();
     res.json(data);

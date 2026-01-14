@@ -22,6 +22,7 @@ describe('Indicators Service', () => {
       };
 
       global.fetch.mockResolvedValueOnce({
+        ok: true,
         json: () => Promise.resolve(mockResponse)
       });
 
@@ -35,6 +36,7 @@ describe('Indicators Service', () => {
 
     it('should call the correct endpoint', async () => {
       global.fetch.mockResolvedValueOnce({
+        ok: true,
         json: () => Promise.resolve({ status: 'success', data: {} })
       });
 
@@ -58,6 +60,7 @@ describe('Indicators Service', () => {
         };
 
         global.fetch.mockResolvedValueOnce({
+          ok: true,
           json: () => Promise.resolve(mockResponse)
         });
 
@@ -73,6 +76,7 @@ describe('Indicators Service', () => {
 
     it('should convert type to lowercase', async () => {
       global.fetch.mockResolvedValueOnce({
+        ok: true,
         json: () => Promise.resolve({ status: 'success', data: {} })
       });
 
@@ -96,6 +100,7 @@ describe('Indicators Service', () => {
       };
 
       global.fetch.mockResolvedValueOnce({
+        ok: true,
         json: () => Promise.resolve(mockResponse)
       });
 

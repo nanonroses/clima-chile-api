@@ -8,13 +8,20 @@ export const securityHeaders = helmet({
       defaultSrc: ["'self'"],
       styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:"],
+      imgSrc: ["'self'", "data:"],
       scriptSrc: ["'self'"],
       connectSrc: ["'self'", "https://api.boostr.cl"]
     }
   },
   crossOriginEmbedderPolicy: false,
-  crossOriginResourcePolicy: { policy: "cross-origin" }
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true
+  },
+  referrerPolicy: {
+    policy: "strict-origin-when-cross-origin"
+  }
 });
 
 // Rate limiter general

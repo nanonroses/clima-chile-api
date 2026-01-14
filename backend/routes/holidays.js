@@ -4,19 +4,8 @@ import { validators } from '../middleware/validator.js';
 
 const router = Router();
 
-// GET /api/holidays - Feriados del año actual
-router.get('/', async (req, res) => {
-  try {
-    const data = await getAllHolidays();
-    res.json(data);
-  } catch (error) {
-    console.error('Error fetching holidays:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Error al obtener feriados'
-    });
-  }
-});
+// IMPORTANTE: Las rutas específicas deben ir ANTES de las rutas con parámetros dinámicos
+// Express evalúa rutas en orden, y /:year capturaría "today", "upcoming", "is" si va primero
 
 // GET /api/holidays/today - Verificar si hoy es feriado
 router.get('/today', async (req, res) => {
@@ -62,6 +51,22 @@ router.get('/upcoming', async (req, res) => {
   }
 });
 
+// GET /api/holidays/is/:date - Verificar si una fecha es feriado
+router.get('/is/:date', validators.date, async (req, res) => {
+  const { date } = req.params;
+
+  try {
+    const data = await checkIfHoliday(date);
+    res.json(data);
+  } catch (error) {
+    console.error('Error checking holiday date:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error al verificar la fecha'
+    });
+  }
+});
+
 // GET /api/holidays/:year - Feriados de un año específico
 router.get('/:year', validators.year, async (req, res) => {
   const { year } = req.params;
@@ -78,18 +83,16 @@ router.get('/:year', validators.year, async (req, res) => {
   }
 });
 
-// GET /api/holidays/is/:date - Verificar si una fecha es feriado
-router.get('/is/:date', validators.date, async (req, res) => {
-  const { date } = req.params;
-
+// GET /api/holidays - Feriados del año actual (ruta raíz al final)
+router.get('/', async (req, res) => {
   try {
-    const data = await checkIfHoliday(date);
+    const data = await getAllHolidays();
     res.json(data);
   } catch (error) {
-    console.error('Error checking holiday date:', error);
+    console.error('Error fetching holidays:', error);
     res.status(500).json({
       status: 'error',
-      message: 'Error al verificar la fecha'
+      message: 'Error al obtener feriados'
     });
   }
 });

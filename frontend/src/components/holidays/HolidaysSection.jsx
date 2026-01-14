@@ -1,20 +1,18 @@
 import { useHolidays } from '../../hooks/useHolidays';
 
-// Formatear fecha
 const formatDate = (dateString) => {
   try {
     const date = new Date(dateString + 'T00:00:00');
     return date.toLocaleDateString('es-CL', {
-      weekday: 'long',
+      weekday: 'short',
       day: 'numeric',
-      month: 'long'
+      month: 'short'
     });
   } catch {
     return dateString;
   }
 };
 
-// Calcular días restantes
 const getDaysUntil = (dateString) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -24,13 +22,11 @@ const getDaysUntil = (dateString) => {
 
   if (diffDays === 0) return 'Hoy';
   if (diffDays === 1) return 'Mañana';
-  return `En ${diffDays} días`;
+  return `${diffDays} días`;
 };
 
-// Obtener icono según tipo de feriado
 const getHolidayIcon = (type, title) => {
   const titleLower = (title || '').toLowerCase();
-
   if (titleLower.includes('navidad')) return '🎄';
   if (titleLower.includes('año nuevo')) return '🎆';
   if (titleLower.includes('pascua') || titleLower.includes('semana santa')) return '✝️';
@@ -38,7 +34,6 @@ const getHolidayIcon = (type, title) => {
   if (titleLower.includes('trabajo')) return '👷';
   if (titleLower.includes('virgen') || titleLower.includes('carmen')) return '🙏';
   if (titleLower.includes('muertos') || titleLower.includes('santos')) return '🕯️';
-
   return type === 'Religioso' ? '⛪' : '📅';
 };
 
@@ -47,70 +42,62 @@ export function HolidaysSection() {
 
   if (loading) {
     return (
-      <section className="holidays-section">
-        <div className="section-glass">
-          <h3 className="section-title">📅 Feriados</h3>
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p className="loading-text">Cargando feriados...</p>
-          </div>
+      <div className="holidays-section">
+        <h3 className="section-title">Próximos Feriados</h3>
+        <div className="loading-container">
+          <div className="spinner"></div>
         </div>
-      </section>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <section className="holidays-section">
-        <div className="section-glass">
-          <h3 className="section-title">📅 Feriados</h3>
-          <p className="error-text">⚠️ {error}</p>
-        </div>
-      </section>
+      <div className="holidays-section">
+        <h3 className="section-title">Próximos Feriados</h3>
+        <p className="error-text">{error}</p>
+      </div>
     );
   }
 
   return (
-    <section className="holidays-section">
-      <div className="section-glass">
-        <h3 className="section-title">📅 Próximos Feriados en Chile</h3>
+    <div className="holidays-section">
+      <h3 className="section-title">Próximos Feriados</h3>
 
-        {/* Banner si hoy es feriado */}
-        {todayHoliday && todayHoliday.is_holiday && (
-          <div className="today-holiday-banner">
-            <span className="banner-icon">🎉</span>
-            <div className="banner-content">
-              <p className="banner-title">¡Hoy es feriado!</p>
-              <p className="banner-name">{todayHoliday.title || todayHoliday.name}</p>
+      {todayHoliday && todayHoliday.is_holiday && (
+        <div className="today-holiday-banner">
+          <span className="banner-icon">✦</span>
+          <div className="banner-content">
+            <p className="banner-title">Hoy es feriado</p>
+            <p className="banner-name">{todayHoliday.title || todayHoliday.name}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="holidays-list">
+        {holidays.slice(0, 5).map((holiday, index) => (
+          <div key={index} className="holiday-item">
+            <div className="holiday-icon">
+              {getHolidayIcon(holiday.type, holiday.title)}
+            </div>
+            <div className="holiday-info">
+              <p className="holiday-name">{holiday.title}</p>
+              <p className="holiday-date">{formatDate(holiday.date)}</p>
+            </div>
+            <div className="holiday-countdown">
+              <span className="countdown-days">{getDaysUntil(holiday.date)}</span>
+              {holiday.inalienable && (
+                <span className="holiday-badge">Irrenunciable</span>
+              )}
             </div>
           </div>
-        )}
-
-        <div className="holidays-list">
-          {holidays.map((holiday, index) => (
-            <div key={index} className="holiday-item">
-              <div className="holiday-icon">
-                {getHolidayIcon(holiday.type, holiday.title)}
-              </div>
-              <div className="holiday-info">
-                <p className="holiday-name">{holiday.title}</p>
-                <p className="holiday-date">{formatDate(holiday.date)}</p>
-              </div>
-              <div className="holiday-countdown">
-                <span className="countdown-days">{getDaysUntil(holiday.date)}</span>
-                {holiday.inalienable && (
-                  <span className="holiday-badge">Irrenunciable</span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {holidays.length === 0 && (
-          <p className="no-data-text">No hay feriados próximos</p>
-        )}
+        ))}
       </div>
-    </section>
+
+      {holidays.length === 0 && (
+        <p className="no-data-text">No hay feriados próximos</p>
+      )}
+    </div>
   );
 }
 

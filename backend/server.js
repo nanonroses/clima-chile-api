@@ -18,11 +18,15 @@ const PORT = process.env.PORT || 3001;
 // Seguridad: Headers HTTP
 app.use(securityHeaders);
 
-// CORS configurado
+// CORS configurado - usa ALLOWED_ORIGINS en producción
+// SEGURIDAD: Siempre define un origen por defecto seguro
+const DEFAULT_PRODUCTION_ORIGINS = 'https://prueba-api-scl.vercel.app';
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? (process.env.ALLOWED_ORIGINS || DEFAULT_PRODUCTION_ORIGINS).split(',').filter(Boolean)
+  : ['http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5173'];
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? ['https://tudominio.cl']
-    : ['http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5173'],
+  origin: allowedOrigins,
   methods: ['GET'],
   allowedHeaders: ['Content-Type']
 }));

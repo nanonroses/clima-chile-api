@@ -1,19 +1,19 @@
 import { useEarthquakes } from '../../hooks/useEarthquakes';
 
-// Obtener color según magnitud
 const getMagnitudeColor = (magnitude) => {
   const mag = parseFloat(magnitude);
-  if (mag >= 7) return '#ff1744'; // Rojo - Mayor
-  if (mag >= 6) return '#ff5722'; // Naranja oscuro
-  if (mag >= 5) return '#ff9800'; // Naranja
-  if (mag >= 4) return '#ffc107'; // Amarillo
-  if (mag >= 3) return '#8bc34a'; // Verde claro
-  return '#4caf50'; // Verde - Menor
+  if (isNaN(mag)) return '#9e9e9e';
+  if (mag >= 7) return '#ff1744';
+  if (mag >= 6) return '#ff5722';
+  if (mag >= 5) return '#ff9800';
+  if (mag >= 4) return '#ffc107';
+  if (mag >= 3) return '#8bc34a';
+  return '#4caf50';
 };
 
-// Obtener etiqueta de severidad
 const getSeverityLabel = (magnitude) => {
   const mag = parseFloat(magnitude);
+  if (isNaN(mag)) return 'N/D';
   if (mag >= 7) return 'Mayor';
   if (mag >= 6) return 'Fuerte';
   if (mag >= 5) return 'Moderado';
@@ -21,7 +21,6 @@ const getSeverityLabel = (magnitude) => {
   return 'Menor';
 };
 
-// Formatear fecha
 const formatDate = (dateString) => {
   try {
     const date = new Date(dateString);
@@ -41,62 +40,52 @@ export function EarthquakeSection() {
 
   if (loading) {
     return (
-      <section className="earthquakes-section">
-        <div className="section-glass">
-          <h3 className="section-title">🌋 Sismos Recientes</h3>
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p className="loading-text">Cargando sismos...</p>
-          </div>
+      <div className="earthquakes-section">
+        <h3 className="section-title">Sismos Recientes</h3>
+        <div className="loading-container">
+          <div className="spinner"></div>
         </div>
-      </section>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <section className="earthquakes-section">
-        <div className="section-glass">
-          <h3 className="section-title">🌋 Sismos Recientes</h3>
-          <p className="error-text">⚠️ {error}</p>
-        </div>
-      </section>
+      <div className="earthquakes-section">
+        <h3 className="section-title">Sismos Recientes</h3>
+        <p className="error-text">{error}</p>
+      </div>
     );
   }
 
   return (
-    <section className="earthquakes-section">
-      <div className="section-glass">
-        <h3 className="section-title">🌋 Últimos Sismos en Chile</h3>
-        <p className="section-subtitle">Datos sísmicos en tiempo real</p>
-
-        <div className="earthquakes-list">
-          {earthquakes.slice(0, 8).map((eq, index) => (
-            <div
-              key={index}
-              className="earthquake-item"
-              style={{ '--mag-color': getMagnitudeColor(eq.magnitude) }}
-            >
-              <div className="earthquake-magnitude">
-                <span className="magnitude-value">{eq.magnitude}</span>
-                <span className="magnitude-label">{getSeverityLabel(eq.magnitude)}</span>
-              </div>
-              <div className="earthquake-info">
-                <p className="earthquake-location">{eq.location || eq.place}</p>
-                <p className="earthquake-details">
-                  <span className="earthquake-depth">📍 {eq.depth} km prof.</span>
-                  <span className="earthquake-date">{formatDate(eq.date || eq.time)}</span>
-                </p>
-              </div>
+    <div className="earthquakes-section">
+      <h3 className="section-title">Sismos Recientes</h3>
+      <div className="earthquakes-list">
+        {earthquakes.slice(0, 6).map((eq, index) => (
+          <div
+            key={index}
+            className="earthquake-item"
+            style={{ '--mag-color': getMagnitudeColor(eq.magnitude) }}
+          >
+            <div className="earthquake-magnitude">
+              <span className="magnitude-value">{eq.magnitude}</span>
+              <span className="magnitude-label">{getSeverityLabel(eq.magnitude)}</span>
             </div>
-          ))}
-        </div>
-
-        {earthquakes.length === 0 && (
-          <p className="no-data-text">No hay datos de sismos disponibles</p>
-        )}
+            <div className="earthquake-info">
+              <p className="earthquake-location">{eq.location || eq.place}</p>
+              <p className="earthquake-details">
+                <span>{eq.depth} km</span>
+                <span>{formatDate(eq.date || eq.time)}</span>
+              </p>
+            </div>
+          </div>
+        ))}
       </div>
-    </section>
+      {earthquakes.length === 0 && (
+        <p className="no-data-text">No hay datos disponibles</p>
+      )}
+    </div>
   );
 }
 

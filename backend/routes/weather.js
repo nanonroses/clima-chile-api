@@ -1,10 +1,11 @@
 import { Router } from 'express';
 import { getAllWeather, getWeatherByCode, STATIONS } from '../services/boostrApi.js';
 import { validators } from '../middleware/validator.js';
+import { strictLimiter } from '../middleware/security.js';
 
 const router = Router();
 
-// GET /api/stations - Lista de estaciones disponibles
+// GET /api/stations - Lista de estaciones disponibles (sin rate limit estricto - datos estáticos)
 router.get('/stations', (req, res) => {
   res.json({
     status: 'success',
@@ -12,8 +13,8 @@ router.get('/stations', (req, res) => {
   });
 });
 
-// GET /api/weather - Clima de todas las estaciones
-router.get('/weather', async (req, res) => {
+// GET /api/weather - Clima de todas las estaciones (rate limit estricto - llama API externa)
+router.get('/weather', strictLimiter, async (req, res) => {
   try {
     const data = await getAllWeather();
     res.json(data);
@@ -26,8 +27,8 @@ router.get('/weather', async (req, res) => {
   }
 });
 
-// GET /api/weather/:code - Clima de una estación específica
-router.get('/weather/:code', validators.stationCode, async (req, res) => {
+// GET /api/weather/:code - Clima de una estación específica (rate limit estricto)
+router.get('/weather/:code', strictLimiter, validators.stationCode, async (req, res) => {
   const { code } = req.params;
 
   try {

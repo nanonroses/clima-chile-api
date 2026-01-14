@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { endpoints } from '../config/api';
 
 export function useHolidays() {
@@ -7,12 +7,17 @@ export function useHolidays() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchHolidays = async () => {
+  const fetchHolidays = useCallback(async (signal) => {
     setLoading(true);
     setError(null);
 
     try {
-      const response = await fetch(endpoints.holidays);
+      const response = await fetch(endpoints.holidays, { signal });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
       const data = await response.json();
 
       if (data.status === 'success' && data.data) {
@@ -33,15 +38,26 @@ export function useHolidays() {
         }
       }
     } catch (err) {
+      // Ignorar errores de abort (cleanup)
+      if (err.name === 'AbortError') return;
       setError('Error al obtener feriados');
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchHolidays();
   }, []);
 
-  return { holidays, todayHoliday, loading, error, refetch: fetchHolidays };
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchHolidays(controller.signal);
+
+    // Cleanup: cancelar fetch si el componente se desmonta
+    return () => controller.abort();
+  }, [fetchHolidays]);
+
+  const refetch = useCallback(() => {
+    const controller = new AbortController();
+    fetchHolidays(controller.signal);
+  }, [fetchHolidays]);
+
+  return { holidays, todayHoliday, loading, error, refetch };
 }

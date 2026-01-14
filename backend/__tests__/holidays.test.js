@@ -19,6 +19,7 @@ describe('Holidays Service', () => {
       };
 
       global.fetch.mockResolvedValueOnce({
+        ok: true,
         json: () => Promise.resolve(mockResponse)
       });
 
@@ -32,6 +33,7 @@ describe('Holidays Service', () => {
 
     it('should fetch holidays for a specific year', async () => {
       global.fetch.mockResolvedValueOnce({
+        ok: true,
         json: () => Promise.resolve({ status: 'success', data: [] })
       });
 
@@ -45,6 +47,7 @@ describe('Holidays Service', () => {
 
     it('should fetch current year when no year provided', async () => {
       global.fetch.mockResolvedValueOnce({
+        ok: true,
         json: () => Promise.resolve({ status: 'success', data: [] })
       });
 
@@ -65,6 +68,7 @@ describe('Holidays Service', () => {
       };
 
       global.fetch.mockResolvedValueOnce({
+        ok: true,
         json: () => Promise.resolve(mockResponse)
       });
 

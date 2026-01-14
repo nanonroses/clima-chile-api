@@ -46,6 +46,7 @@ describe('Weather Service', () => {
       };
 
       global.fetch.mockResolvedValueOnce({
+        ok: true,
         json: () => Promise.resolve(mockResponse)
       });
 
@@ -71,6 +72,7 @@ describe('Weather Service', () => {
       };
 
       global.fetch.mockResolvedValueOnce({
+        ok: true,
         json: () => Promise.resolve(mockResponse)
       });
 
@@ -87,6 +89,7 @@ describe('Weather Service', () => {
       };
 
       global.fetch.mockResolvedValueOnce({
+        ok: true,
         json: () => Promise.resolve(mockResponse)
       });
 

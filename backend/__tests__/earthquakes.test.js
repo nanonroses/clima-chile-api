@@ -25,6 +25,7 @@ describe('Earthquakes Service', () => {
       };
 
       global.fetch.mockResolvedValueOnce({
+        ok: true,
         json: () => Promise.resolve(mockResponse)
       });
 
@@ -44,6 +45,7 @@ describe('Earthquakes Service', () => {
 
     it('should call the correct endpoint', async () => {
       global.fetch.mockResolvedValueOnce({
+        ok: true,
         json: () => Promise.resolve({ status: 'success', data: [] })
       });
 
