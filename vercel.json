@@ -3,6 +3,13 @@
   "outputDirectory": "frontend/dist",
   "framework": "vite",
   "rewrites": [
+    { "source": "/api/weather/:code", "destination": "https://api.boostr.cl/weather/:code.json" },
+    { "source": "/api/weather", "destination": "https://api.boostr.cl/weather.json" },
+    { "source": "/api/earthquakes", "destination": "https://api.boostr.cl/earthquakes/recent.json" },
+    { "source": "/api/holidays/:year", "destination": "https://api.boostr.cl/holidays/:year.json" },
+    { "source": "/api/holidays", "destination": "https://api.boostr.cl/holidays.json" },
+    { "source": "/api/indicators/:type", "destination": "https://api.boostr.cl/economy/indicator/:type.json" },
+    { "source": "/api/indicators", "destination": "https://api.boostr.cl/economy/indicators.json" },
     { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
@@ -15,7 +22,7 @@
         { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://*.vercel.app" }
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.boostr.cl https://*.vercel.app" }
       ]
     },
     {
