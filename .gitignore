@@ -27,6 +27,15 @@ tmpclaude-*
 nul
 *.tmp
 
+# Tests
+__tests__/
+e2e/
+src/test/
+*.test.js
+*.test.jsx
+*.spec.js
+*.spec.jsx
+
 # Playwright
 .playwright-mcp/
 playwright-report/
