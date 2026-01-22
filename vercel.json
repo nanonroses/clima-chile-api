@@ -2,17 +2,33 @@
   "buildCommand": "cd frontend && npm install && npm run build",
   "outputDirectory": "frontend/dist",
   "framework": "vite",
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "@vercel/node@3"
+    }
+  },
   "rewrites": [
-    { "source": "/api/weather/:code", "destination": "https://api.boostr.cl/weather/:code.json" },
-    { "source": "/api/weather", "destination": "https://api.boostr.cl/weather.json" },
-    { "source": "/api/earthquakes", "destination": "https://api.boostr.cl/earthquakes/recent.json" },
-    { "source": "/api/holidays/:year", "destination": "https://api.boostr.cl/holidays/:year.json" },
-    { "source": "/api/holidays", "destination": "https://api.boostr.cl/holidays.json" },
-    { "source": "/api/indicators/:type", "destination": "https://api.boostr.cl/economy/indicator/:type.json" },
-    { "source": "/api/indicators", "destination": "https://api.boostr.cl/economy/indicators.json" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/api/health", "destination": "/api/health" },
+    { "source": "/api/auth/register", "destination": "/api/auth/register" },
+    { "source": "/api/auth/login", "destination": "/api/auth/login" },
+    { "source": "/api/weather/:code", "destination": "/api/weather/[code]" },
+    { "source": "/api/weather", "destination": "/api/weather/index" },
+    { "source": "/api/earthquakes", "destination": "/api/earthquakes" },
+    { "source": "/api/holidays/:year", "destination": "/api/holidays?year=:year" },
+    { "source": "/api/holidays", "destination": "/api/holidays" },
+    { "source": "/api/indicators/:type", "destination": "/api/indicators?type=:type" },
+    { "source": "/api/indicators", "destination": "/api/indicators" },
+    { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],
   "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
+      ]
+    },
     {
       "source": "/(.*)",
       "headers": [
@@ -20,9 +36,7 @@
         { "key": "X-Frame-Options", "value": "DENY" },
         { "key": "X-XSS-Protection", "value": "1; mode=block" },
         { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), interest-cohort=()" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self' https://api.boostr.cl https://*.vercel.app" }
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
       ]
     },
     {
