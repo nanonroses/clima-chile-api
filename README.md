@@ -1,139 +1,170 @@
 # Clima Chile API
 
-Aplicación web fullstack para consultar información en tiempo real de Chile: clima, sismos, feriados e indicadores económicos.
-
-## Características
-
-- **Clima en tiempo real** - Datos meteorológicos de 26 estaciones a lo largo de Chile
-- **Sismos recientes** - Últimos movimientos telúricos registrados
-- **Feriados** - Calendario de feriados chilenos
-- **Indicadores económicos** - UF, dólar, euro y más
+API y aplicación web para consultar información en tiempo real de Chile: clima, sismos, feriados e indicadores económicos.
 
 ## Demo
 
-[https://prueba-api-scl.vercel.app](https://prueba-api-scl.vercel.app)
+**[https://clima-chile-api.vercel.app](https://clima-chile-api.vercel.app)**
 
-## Tecnologías
+## Arquitectura
 
-### Frontend
-- React 18
-- Vite
-- CSS con animaciones según el clima
-
-### Backend
-- Node.js
-- Express.js
-- Helmet (seguridad)
-- Rate limiting
-
-## Instalación
-
-### Requisitos
-- Node.js 18+
-- npm
-
-### Clonar el repositorio
-
-```bash
-git clone https://github.com/tu-usuario/PRUEBA_API_SCL.git
-cd PRUEBA_API_SCL
+```
+Cliente → Vercel (CDN + Serverless) → Supabase (PostgreSQL)
+                    ↓
+              API Boostr (externa)
 ```
 
-### Backend
+## Stack Tecnológico
 
-```bash
-cd backend
-npm install
-npm run dev
-```
+| Capa | Tecnología |
+|------|------------|
+| **Frontend** | React 18 + Vite |
+| **Backend** | Vercel Serverless Functions (Node.js) |
+| **Base de datos** | Supabase (PostgreSQL) |
+| **Autenticación** | JWT + Refresh Tokens |
+| **Cache** | PostgreSQL (persistente) |
+| **Deploy** | Vercel (automático desde GitHub) |
 
-El servidor correrá en `http://localhost:3001`
+## Características
 
-### Frontend
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-La aplicación estará disponible en `http://localhost:5173`
+- **Clima en tiempo real** - 26 estaciones meteorológicas de Chile
+- **Sismos recientes** - Últimos movimientos telúricos
+- **Feriados** - Calendario de feriados chilenos
+- **Indicadores económicos** - UF, dólar, euro, UTM y más
+- **Autenticación** - Registro y login con JWT
+- **Cache inteligente** - Reduce llamadas a API externa
 
 ## API Endpoints
 
 ### Clima
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| GET | `/api/stations` | Lista de estaciones meteorológicas |
-| GET | `/api/weather` | Clima de todas las estaciones |
-| GET | `/api/weather/:code` | Clima de una estación específica |
+| GET | `/api/weather` | Lista de estaciones meteorológicas |
+| GET | `/api/weather/:code` | Clima de una estación (ej: SCFA) |
 
 ### Sismos
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| GET | `/api/earthquakes` | Últimos 15 sismos |
-| GET | `/api/earthquakes/recent` | Alias de sismos recientes |
+| GET | `/api/earthquakes` | Últimos sismos registrados |
 
 ### Feriados
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
 | GET | `/api/holidays` | Feriados del año actual |
-| GET | `/api/holidays/today` | Verifica si hoy es feriado |
-| GET | `/api/holidays/upcoming` | Próximos 5 feriados |
-| GET | `/api/holidays/:year` | Feriados de un año específico |
+| GET | `/api/holidays?year=2025` | Feriados de un año específico |
 
 ### Indicadores Económicos
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
 | GET | `/api/indicators` | Todos los indicadores |
-| GET | `/api/indicators/:type` | Indicador específico (uf, dolar, euro, etc.) |
+| GET | `/api/indicators?type=uf` | Indicador específico |
+
+**Tipos válidos:** `uf`, `dolar`, `euro`, `utm`, `ipc`, `ivp`, `imacec`, `tpm`, `libra`, `peso_arg`, `real`
+
+### Autenticación
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Registro de usuario |
+| POST | `/api/auth/login` | Iniciar sesión |
 
 ### Sistema
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| GET | `/api/health` | Estado del servidor |
+| GET | `/api/health` | Estado del servidor y servicios |
 
-## Estaciones Meteorológicas
+## Instalación Local
 
-La aplicación incluye datos de 26 estaciones a lo largo de Chile:
+### Requisitos
+- Node.js 18+
+- Cuenta en [Supabase](https://supabase.com) (gratis)
 
-- Arica, Iquique, Antofagasta, Calama
-- La Serena, Santiago, Viña del Mar
-- Rancagua, Talca, Chillán, Concepción
-- Temuco, Valdivia, Osorno, Puerto Montt
-- Coyhaique, Punta Arenas
-- Isla de Pascua, Isla Robinson Crusoe
-- Base Antártica
+### 1. Clonar repositorio
 
-## Scripts Disponibles
-
-### Frontend
 ```bash
-npm run dev          # Servidor de desarrollo
-npm run build        # Build de producción
-npm run preview      # Preview del build
-npm run test         # Ejecutar tests
-npm run test:e2e     # Tests end-to-end con Playwright
+git clone https://github.com/nanonroses/clima-chile-api.git
+cd clima-chile-api
 ```
 
-### Backend
+### 2. Configurar variables de entorno
+
 ```bash
-npm run dev          # Servidor de desarrollo con hot reload
-npm start            # Servidor de producción
-npm run test         # Ejecutar tests
-npm run test:coverage # Tests con cobertura
+cp backend/.env.example backend/.env
 ```
+
+Edita `backend/.env` con tus credenciales de Supabase:
+
+```env
+DATABASE_URL=postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:5432/postgres
+JWT_SECRET=tu-clave-secreta-de-32-caracteres-minimo
+JWT_EXPIRES_IN=15m
+```
+
+### 3. Instalar dependencias
+
+```bash
+# Backend (desarrollo local)
+cd backend && npm install
+
+# Frontend
+cd ../frontend && npm install
+```
+
+### 4. Ejecutar
+
+```bash
+# Backend (puerto 3001)
+cd backend && npm run dev
+
+# Frontend (puerto 5173)
+cd frontend && npm run dev
+```
+
+## Deploy en Vercel
+
+El proyecto está configurado para deploy automático:
+
+1. Conecta tu repositorio a Vercel
+2. Agrega las variables de entorno:
+   - `DATABASE_URL`
+   - `JWT_SECRET`
+   - `JWT_EXPIRES_IN`
+3. Deploy automático con cada push a `main`
+
+## Base de Datos
+
+### Tablas
+
+| Tabla | Descripción |
+|-------|-------------|
+| `users` | Usuarios registrados |
+| `refresh_tokens` | Tokens de refresco JWT |
+| `cache_entries` | Caché persistente de API |
+| `query_history` | Historial de consultas |
+| `user_preferences` | Preferencias de usuario |
+| `favorite_cities` | Ciudades favoritas |
+
+### TTL del Caché
+
+| Endpoint | TTL |
+|----------|-----|
+| Clima por estación | 5 minutos |
+| Lista de estaciones | 30 minutos |
+| Sismos | 2 minutos |
+| Feriados | 24 horas |
+| Indicadores | 1 hora |
 
 ## Seguridad
 
-- Headers HTTP seguros con Helmet
-- Rate limiting para prevenir abuso
-- CORS configurado por ambiente
-- Validación de entrada con express-validator
+- **SQL Injection** - Queries parametrizadas
+- **XSS** - Sanitización de inputs
+- **CORS** - Whitelist de orígenes
+- **Headers** - X-Frame-Options, CSP, X-Content-Type-Options
+- **Passwords** - bcrypt con 12 salt rounds
+- **Tokens** - SHA-256 hash antes de almacenar
 
 ## Fuente de Datos
 
-Los datos son proporcionados por [Boostr API](https://boostr.cl).
+Datos proporcionados por [Boostr API](https://boostr.cl).
 
 ## Licencia
 
