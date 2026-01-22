@@ -3,14 +3,13 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import db from '../lib/db.js';
+import { isValidEmail, isValidPassword, sanitizeString, setSecurityHeaders } from '../lib/security.js';
 
-const SALT_ROUNDS = 10;
+const SALT_ROUNDS = 12; // Aumentado para mayor seguridad
 
 export default async function handler(req, res) {
-  // CORS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // Headers de seguridad
+  setSecurityHeaders(res, req);
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -21,7 +20,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, password, name } = req.body;
+    const { email, password, name } = req.body || {};
 
     // Validaciones
     if (!email || !password || !name) {
@@ -31,17 +30,37 @@ export default async function handler(req, res) {
       });
     }
 
-    if (password.length < 8) {
+    // Validar formato de email
+    if (!isValidEmail(email)) {
       return res.status(400).json({
         status: 'error',
-        message: 'La contraseña debe tener al menos 8 caracteres'
+        message: 'Formato de email inválido'
       });
     }
+
+    // Validar contraseña segura
+    if (!isValidPassword(password)) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'La contraseña debe tener 8-128 caracteres, incluir letras y números'
+      });
+    }
+
+    // Sanitizar nombre
+    const sanitizedName = sanitizeString(name);
+    if (sanitizedName.length < 2) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'El nombre debe tener al menos 2 caracteres'
+      });
+    }
+
+    const sanitizedEmail = email.toLowerCase().trim();
 
     // Verificar si el email ya existe
     const existingUser = await db.query(
       'SELECT 1 FROM users WHERE email = $1',
-      [email.toLowerCase().trim()]
+      [sanitizedEmail]
     );
 
     if (existingUser.rows.length > 0) {
@@ -57,7 +76,7 @@ export default async function handler(req, res) {
       `INSERT INTO users (email, password_hash, name)
        VALUES ($1, $2, $3)
        RETURNING id, email, name, created_at`,
-      [email.toLowerCase().trim(), passwordHash, name.trim()]
+      [sanitizedEmail, passwordHash, sanitizedName]
     );
 
     const user = result.rows[0];
@@ -71,7 +90,7 @@ export default async function handler(req, res) {
 
     const refreshToken = crypto.randomBytes(40).toString('hex');
     const refreshTokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
-    const refreshExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 días
+    const refreshExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     await db.query(
       `INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
@@ -91,7 +110,7 @@ export default async function handler(req, res) {
       }
     });
   } catch (error) {
-    console.error('Error en registro:', error);
+    console.error('Error en registro:', error.message);
     res.status(500).json({
       status: 'error',
       message: 'Error interno del servidor'

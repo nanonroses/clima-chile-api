@@ -1,11 +1,11 @@
 // Sismos recientes
 import db from './lib/db.js';
+import { setSecurityHeaders } from './lib/security.js';
 
 const CACHE_TTL = 2 * 60 * 1000; // 2 minutos
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  setSecurityHeaders(res, req);
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') {
@@ -47,7 +47,7 @@ export default async function handler(req, res) {
 
     res.status(200).json(data);
   } catch (error) {
-    console.error('Error earthquakes:', error);
+    console.error('Error earthquakes:', error.message);
     res.status(500).json({ status: 'error', message: 'Error al obtener sismos' });
   }
 }

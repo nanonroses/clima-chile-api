@@ -1,33 +1,71 @@
+# ========================================
 # Dependencies
+# ========================================
 node_modules/
+.pnp/
+.pnp.js
 
-# Environment
+# ========================================
+# Environment & Secrets (CRITICAL)
+# ========================================
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+credentials/
+.secrets
+*.secret
 
+# ========================================
 # Build output
+# ========================================
 dist/
 build/
+.next/
+out/
+.vercel/
 
-# IDE
+# ========================================
+# IDE & Editors
+# ========================================
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
 
-# OS
+# ========================================
+# OS Files
+# ========================================
 .DS_Store
+.DS_Store?
+._*
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# Logs
+# ========================================
+# Logs & Debug
+# ========================================
 *.log
+logs/
 npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
 
-# Temp files
-tmpclaude-*
-nul
-*.tmp
-
-# Tests
+# ========================================
+# Testing
+# ========================================
+coverage/
+.nyc_output/
 __tests__/
 e2e/
 src/test/
@@ -35,11 +73,29 @@ src/test/
 *.test.jsx
 *.spec.js
 *.spec.jsx
-
-# Playwright
 .playwright-mcp/
 playwright-report/
 test-results/
 
-# Claude
+# ========================================
+# Temp & Cache
+# ========================================
+*.tmp
+*.temp
+.cache/
+.parcel-cache/
+tmpclaude-*
+nul
+
+# ========================================
+# Claude & AI Tools
+# ========================================
 .claude/
+
+# ========================================
+# Database
+# ========================================
+*.sqlite
+*.sqlite3
+*.db
+dump.sql

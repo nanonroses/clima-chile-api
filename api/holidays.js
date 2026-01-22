@@ -1,11 +1,11 @@
 // Feriados
 import db from './lib/db.js';
+import { setSecurityHeaders } from './lib/security.js';
 
 const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 horas
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  setSecurityHeaders(res, req);
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') {
@@ -13,6 +13,15 @@ export default async function handler(req, res) {
   }
 
   const { year } = req.query;
+
+  // Validar año si se proporciona
+  if (year && (!/^\d{4}$/.test(year) || parseInt(year) < 2000 || parseInt(year) > 2100)) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'Año inválido (debe ser entre 2000 y 2100)'
+    });
+  }
+
   const targetYear = year || new Date().getFullYear();
   const cacheKey = `holidays:${targetYear}`;
 
@@ -53,7 +62,7 @@ export default async function handler(req, res) {
 
     res.status(200).json(data);
   } catch (error) {
-    console.error('Error holidays:', error);
+    console.error('Error holidays:', error.message);
     res.status(500).json({ status: 'error', message: 'Error al obtener feriados' });
   }
 }

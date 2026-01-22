@@ -3,11 +3,11 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import db from '../lib/db.js';
+import { isValidEmail, setSecurityHeaders } from '../lib/security.js';
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // Headers de seguridad
+  setSecurityHeaders(res, req);
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') {
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
 
     if (!email || !password) {
       return res.status(400).json({
@@ -24,15 +24,26 @@ export default async function handler(req, res) {
       });
     }
 
+    // Validar formato de email
+    if (!isValidEmail(email)) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Formato de email inválido'
+      });
+    }
+
+    const sanitizedEmail = email.toLowerCase().trim();
+
     // Buscar usuario
     const result = await db.query(
       `SELECT id, email, password_hash, name, is_active
        FROM users WHERE email = $1`,
-      [email.toLowerCase().trim()]
+      [sanitizedEmail]
     );
 
     const user = result.rows[0];
 
+    // Mensaje genérico para no revelar si el usuario existe
     if (!user || !user.is_active) {
       return res.status(401).json({
         status: 'error',
@@ -84,7 +95,7 @@ export default async function handler(req, res) {
       }
     });
   } catch (error) {
-    console.error('Error en login:', error);
+    console.error('Error en login:', error.message);
     res.status(500).json({ status: 'error', message: 'Error interno del servidor' });
   }
 }

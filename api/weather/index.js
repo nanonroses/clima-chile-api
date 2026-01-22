@@ -1,11 +1,11 @@
 // Lista de estaciones meteorológicas
 import db from '../lib/db.js';
+import { setSecurityHeaders } from '../lib/security.js';
 
 const CACHE_TTL = 30 * 60 * 1000; // 30 minutos
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  setSecurityHeaders(res, req);
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') {
@@ -15,7 +15,6 @@ export default async function handler(req, res) {
   const cacheKey = 'weather:stations';
 
   try {
-    // Intentar obtener de caché
     const cached = await db.query(
       `UPDATE cache_entries SET hit_count = hit_count + 1
        WHERE cache_key = $1 AND expires_at > CURRENT_TIMESTAMP
@@ -27,7 +26,6 @@ export default async function handler(req, res) {
       return res.status(200).json(cached.rows[0].data);
     }
 
-    // Obtener de API externa
     const response = await fetch('https://api.boostr.cl/weather.json');
     const data = await response.json();
 
@@ -35,7 +33,6 @@ export default async function handler(req, res) {
       return res.status(response.status).json(data);
     }
 
-    // Guardar en caché
     const expiresAt = new Date(Date.now() + CACHE_TTL);
     await db.query(
       `INSERT INTO cache_entries (cache_key, data, data_type, expires_at, hit_count)
@@ -50,7 +47,7 @@ export default async function handler(req, res) {
 
     res.status(200).json(data);
   } catch (error) {
-    console.error('Error weather stations:', error);
+    console.error('Error weather stations:', error.message);
     res.status(500).json({ status: 'error', message: 'Error al obtener estaciones' });
   }
 }

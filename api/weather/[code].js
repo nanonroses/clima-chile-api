@@ -1,11 +1,11 @@
 // Proxy para clima por estación
 import db from '../lib/db.js';
+import { setSecurityHeaders } from '../lib/security.js';
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  setSecurityHeaders(res, req);
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') {
@@ -14,14 +14,16 @@ export default async function handler(req, res) {
 
   const { code } = req.query;
 
-  if (!code || !/^[A-Za-z0-9]{4}$/.test(code)) {
+  // Validación estricta del código
+  if (!code || typeof code !== 'string' || !/^[A-Za-z0-9]{4}$/.test(code)) {
     return res.status(400).json({
       status: 'error',
-      message: 'Código de estación inválido (debe ser 4 caracteres alfanuméricos)'
+      message: 'Código de estación inválido (4 caracteres alfanuméricos)'
     });
   }
 
-  const cacheKey = `weather:${code.toUpperCase()}`;
+  const sanitizedCode = code.toUpperCase();
+  const cacheKey = `weather:${sanitizedCode}`;
 
   try {
     // Intentar obtener de caché
@@ -37,7 +39,7 @@ export default async function handler(req, res) {
     }
 
     // Obtener de API externa
-    const response = await fetch(`https://api.boostr.cl/weather/${code}.json`);
+    const response = await fetch(`https://api.boostr.cl/weather/${sanitizedCode}.json`);
     const data = await response.json();
 
     if (!response.ok) {
@@ -59,7 +61,7 @@ export default async function handler(req, res) {
 
     res.status(200).json(data);
   } catch (error) {
-    console.error('Error weather:', error);
+    console.error('Error weather:', error.message);
     res.status(500).json({ status: 'error', message: 'Error al obtener datos del clima' });
   }
 }

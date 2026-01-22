@@ -1,11 +1,12 @@
 // Indicadores económicos
 import db from './lib/db.js';
+import { setSecurityHeaders } from './lib/security.js';
 
 const CACHE_TTL = 60 * 60 * 1000; // 1 hora
+const VALID_TYPES = ['uf', 'dolar', 'euro', 'utm', 'ipc', 'ivp', 'imacec', 'tpm', 'libra', 'peso_arg', 'real'];
 
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  setSecurityHeaders(res, req);
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') {
@@ -13,7 +14,17 @@ export default async function handler(req, res) {
   }
 
   const { type } = req.query;
-  const cacheKey = type ? `indicators:${type}` : 'indicators:all';
+
+  // Validar tipo si se proporciona
+  if (type && !VALID_TYPES.includes(type.toLowerCase())) {
+    return res.status(400).json({
+      status: 'error',
+      message: `Tipo inválido. Válidos: ${VALID_TYPES.join(', ')}`
+    });
+  }
+
+  const sanitizedType = type ? type.toLowerCase() : null;
+  const cacheKey = sanitizedType ? `indicators:${sanitizedType}` : 'indicators:all';
 
   try {
     const cached = await db.query(
@@ -27,8 +38,8 @@ export default async function handler(req, res) {
       return res.status(200).json(cached.rows[0].data);
     }
 
-    const url = type
-      ? `https://api.boostr.cl/economy/indicator/${type}.json`
+    const url = sanitizedType
+      ? `https://api.boostr.cl/economy/indicator/${sanitizedType}.json`
       : 'https://api.boostr.cl/economy/indicators.json';
 
     const response = await fetch(url);
@@ -52,7 +63,7 @@ export default async function handler(req, res) {
 
     res.status(200).json(data);
   } catch (error) {
-    console.error('Error indicators:', error);
+    console.error('Error indicators:', error.message);
     res.status(500).json({ status: 'error', message: 'Error al obtener indicadores' });
   }
 }
